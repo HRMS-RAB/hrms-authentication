@@ -1,4 +1,77 @@
-// src/main/java/com/hrms/auth/security/SecurityConfig.java
+// SecurityConfig.java
+// Path: hrms-authentication/src/main/java/com/hrms/auth/security/SecurityConfig.java
+
+package com.hrms.auth.security;
+
+import com.hrms.auth.service.AuthService;
+import com.hrms.auth.security.JwtAuthenticationFilter;
+import com.hrms.auth.security.JwtUtil;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+@Configuration
+@EnableMethodSecurity
+public class SecurityConfig {
+
+    private final JwtUtil jwtUtil;
+    private final AuthService authService;
+
+    public SecurityConfig(JwtUtil jwtUtil, AuthService authService) {
+        this.jwtUtil = jwtUtil;
+        this.authService = authService;
+    }
+
+    @Bean
+    public JwtAuthenticationFilter jwtAuthenticationFilter() {
+        return new JwtAuthenticationFilter(jwtUtil, authService);
+    }
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http,
+                                           JwtAuthenticationFilter filter,
+                                           DaoAuthenticationProvider authProvider) throws Exception {
+        http
+          .csrf(csrf -> csrf.disable())
+          .authorizeHttpRequests(authz -> authz
+              .requestMatchers("/auth/login").permitAll()
+              .anyRequest().authenticated()
+          )
+          .sessionManagement(sess -> 
+              sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+          )
+          .authenticationProvider(authProvider)
+          .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
+
+    @Bean
+    public DaoAuthenticationProvider authenticationProvider(AuthService authService,
+                                                            PasswordEncoder encoder) {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setUserDetailsService(authService);
+        provider.setPasswordEncoder(encoder);
+        return provider;
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
+    }
+}
+
+
+/*// src/main/java/com/hrms/auth/security/SecurityConfig.java
 package com.hrms.auth.security;
 
 import com.hrms.auth.service.AuthService;              // only for AuthenticationProvider
@@ -17,7 +90,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    /** register the filter as its own bean – no field injection */
+    /** register the filter as its own bean – no field injection 
    // @Bean
     //public JwtAuthenticationFilter jwtAuthenticationFilter() {
      //   return new JwtAuthenticationFilter();
@@ -45,7 +118,7 @@ public class SecurityConfig {
         return http.build();
     }
 
-    /** AuthenticationProvider now built via constructor injection */
+    /** AuthenticationProvider now built via constructor injection 
     @Bean
     public DaoAuthenticationProvider authenticationProvider(AuthService authService,
                                                             PasswordEncoder encoder) {
@@ -60,4 +133,4 @@ public class SecurityConfig {
             throws Exception {
         return cfg.getAuthenticationManager();
     }
-}
+}*/

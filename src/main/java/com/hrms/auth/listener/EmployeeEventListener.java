@@ -24,11 +24,16 @@ public class EmployeeEventListener {
     /** Handles “employee created” events from hrms-backend. */
  
     
-    //@RabbitListener(queues = "#{rabbitConfig.employeeCreatedQueue}")
+    /*//@RabbitListener(queues = "#{rabbitConfig.employeeCreatedQueue}")
     @RabbitListener(
             queues = "#{rabbitConfig.employeeCreatedQueue}",
             containerFactory = "rabbitListenerContainerFactory"   // keep if you have this factory bean
-        )
+        )*/
+    
+    @RabbitListener(
+            queues = "${hrms.rabbitmq.employee.queue}",
+            containerFactory = "rabbitListenerContainerFactory"
+    )
     
     public void handleEmployeeCreated(EmployeeEvent event) {
 
