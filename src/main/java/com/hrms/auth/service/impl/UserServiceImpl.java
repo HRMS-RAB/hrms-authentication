@@ -1,16 +1,15 @@
-
-// UserServiceImpl.java
-// Path: hrms-authentication/src/main/java/com/hrms/auth/service/impl/UserServiceImpl.java
-
 package com.hrms.auth.service.impl;
 
 import com.hrms.auth.dto.UserDto;
 import com.hrms.auth.entity.Role;
 import com.hrms.auth.entity.User;
+import com.hrms.auth.listener.EmployeeEvent;
 import com.hrms.auth.mapper.UserMapper;
 import com.hrms.auth.repository.RoleRepository;
 import com.hrms.auth.repository.UserRepository;
 import com.hrms.auth.service.UserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -25,6 +24,8 @@ import java.util.stream.Collectors;
 @Transactional
 public class UserServiceImpl implements UserService {
 
+    private static final Logger log = LoggerFactory.getLogger(UserServiceImpl.class);
+
     private final UserRepository userRepo;
     private final RoleRepository roleRepo;
     private final PasswordEncoder passwordEncoder;
@@ -37,43 +38,65 @@ public class UserServiceImpl implements UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
+    /*──────────────────── event-driven upsert ────────────────────*/
+
+    @Override
+    public UserDto upsertFromEmployeeEvent(EmployeeEvent evt) {
+
+        // build a DTO from the event
+        UserDto dto = new UserDto();
+        dto.setEmployeeId(evt.getEmployeeId());
+        dto.setWorkEmail(evt.getWorkEmail());
+        dto.setFullName(evt.getFullName());
+        dto.setGradeLevel(evt.getGradeLevel());
+        dto.setRoles(Set.of("EMPLOYEE"));      // default role; RoleAssignmentService will refine
+
+        return createOrUpdateUser(dto);
+    }
+
+    /*──────────────────── admin / API CRUD ───────────────────────*/
+
     @Override
     public UserDto createOrUpdateUser(UserDto dto) {
-        // Validate mandatory fields
+
         if (!StringUtils.hasText(dto.getWorkEmail())) {
             throw new IllegalArgumentException("workEmail is mandatory");
         }
 
-        boolean admin = dto.getRoles().contains("HR_ADMIN");
+        boolean admin = dto.getRoles() != null && dto.getRoles().contains("HR_ADMIN");
         dto.setIsAdmin(admin);
 
         if (!admin && dto.getEmployeeId() == null) {
             throw new IllegalArgumentException("employeeId is mandatory for non-admin users");
         }
 
-        // Prevent duplicate email on create
+        // Prevent duplicate email on CREATE
         if (dto.getUserId() == null && userRepo.existsByWorkEmail(dto.getWorkEmail())) {
             throw new IllegalArgumentException("User with email " + dto.getWorkEmail() + " already exists.");
         }
 
-        // Resolve roles
-        Set<Role> roles = dto.getRoles().stream()
-                .map(name -> roleRepo.findByName(name)
-                        .orElseThrow(() -> new IllegalArgumentException("Role " + name + " not found")))
-                .collect(Collectors.toSet());
+        // Resolve Role entities
+        Set<Role> roles = dto.getRoles() == null ? Set.of() :
+                dto.getRoles().stream()
+                        .map(name -> roleRepo.findByName(name)
+                                .orElseThrow(() -> new IllegalArgumentException("Role " + name + " not found")))
+                        .collect(Collectors.toSet());
 
-        // Map DTO to entity
+        // Map DTO -> Entity
         User entity = UserMapper.toEntity(dto, roles);
 
-        // Set default encoded password
-        String defaultPassword = "Password@1";
-        entity.setPassword(passwordEncoder.encode(defaultPassword));
+        // Ensure password (default for new users)
+        if (entity.getPassword() == null) {
+            String defaultPwd = passwordEncoder.encode("Welcome@123");
+            entity.setPassword(defaultPwd);
+        }
 
         try {
             User saved = userRepo.save(entity);
             return UserMapper.toDto(saved);
         } catch (DataIntegrityViolationException ex) {
-            throw new IllegalStateException("DB constraint violation", ex);
+            log.error("DB constraint violation saving user {}", dto.getWorkEmail(), ex);
+            throw new IllegalStateException("Unable to save user", ex);
         }
     }
 
