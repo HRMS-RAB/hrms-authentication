@@ -2,7 +2,7 @@ package com.hrms.auth.entity;
 
 import jakarta.persistence.*;
 import org.hibernate.envers.Audited;
-
+import java.time.LocalDateTime;                    //  <<< CHANGED >>>
 import java.util.HashSet;
 import java.util.Set;
 
@@ -36,6 +36,11 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    /** NEW audit column — time of last password update */          //  <<< CHANGED >>>
+    @Column(name = "password_changed_at")                           //  <<< CHANGED >>>
+    private LocalDateTime passwordChangedAt;                        //  <<< CHANGED >>>
+    
+    
     /** NEW column, used by role-assignment logic */
     @Column(name = "grade_level", length = 50)
     private String gradeLevel;
@@ -87,59 +92,14 @@ public class User {
 
     public Set<Role> getRoles()           { return roles; }
     public void setRoles(Set<Role> r)     { this.roles = r; }
+    
+    public LocalDateTime getPasswordChangedAt() {                   //  <<< CHANGED >>>
+        return passwordChangedAt;                                   //  <<< CHANGED >>>
+    }                                                               //  <<< CHANGED >>>
+    public void setPasswordChangedAt(LocalDateTime dt) {            //  <<< CHANGED >>>
+        this.passwordChangedAt = dt;                                //  <<< CHANGED >>>
+    }                                                               //  <<< CHANGED >>>
+    
+    
 }
 
-
-/*package com.hrms.auth.entity;
-
-import jakarta.persistence.*;
-import java.util.Set;
-import java.util.HashSet;
-import org.hibernate.envers.Audited;
-
-@Audited
-
-@Entity
-@Table(name = "users")
-public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long userId;
-
-    private Long empId;
-    private Long deptId;
-    private String deptName;
-    private String fullName;
-
-    @Column(unique = true, nullable = false)
-    private String workEmail;
-
-    private String password;
-    private Boolean active = true;
-
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "user_roles",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id"))
-    private Set<Role> roles = new HashSet<>();
-
-    //getters and setters
-    public Long getUserId() { return userId; }
-    public void setUserId(Long userId) { this.userId = userId; }
-    public Long getEmpId() { return empId; }
-    public void setEmpId(Long empId) { this.empId = empId; }
-    public Long getDeptId() { return deptId; }
-    public void setDeptId(Long deptId) { this.deptId = deptId; }
-    public String getDeptName() { return deptName; }
-    public void setDeptName(String deptName) { this.deptName = deptName; }
-    public String getFullName() { return fullName; }
-    public void setFullName(String fullName) { this.fullName = fullName; }
-    public String getWorkEmail() { return workEmail; }
-    public void setWorkEmail(String workEmail) { this.workEmail = workEmail; }
-    public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
-    public Boolean getActive() { return active; }
-    public void setActive(Boolean active) { this.active = active; }
-    public Set<Role> getRoles() { return roles; }
-    public void setRoles(Set<Role> roles) { this.roles = roles; }
-}*/

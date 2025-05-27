@@ -1,7 +1,6 @@
 
 // PasswordEncoderConfig.java
 // Path: hrms-authentication/src/main/java/com/hrms/auth/config/PasswordEncoderConfig.java
-
 package com.hrms.auth.config;
 
 import org.springframework.context.annotation.Bean;
@@ -9,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+/** Single source of truth for the BCrypt encoder. */
 @Configuration
 public class PasswordEncoderConfig {
 
