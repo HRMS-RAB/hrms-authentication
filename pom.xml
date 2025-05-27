@@ -45,6 +45,11 @@
       <artifactId>spring-boot-starter-web</artifactId>
     </dependency>
 
+<!-- spring-boot-starter-mail gives JavaMailSender & SimpleMailMessage -->
+	<dependency>
+	    <groupId>org.springframework.boot</groupId>
+	    <artifactId>spring-boot-starter-mail</artifactId>
+	</dependency>
 
 <!--Hibernate Envers - pom.xml -->
 <dependency>
