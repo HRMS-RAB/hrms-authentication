@@ -80,7 +80,7 @@ public class SecurityConfig {
     }
 
     /*──────────────────────────────  CORS  ──────────────────────────────*/
-    @Bean
+   /* @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         List<String> origins = Arrays.stream(originsCsv.split(","))
                                      .map(String::trim)
@@ -89,6 +89,22 @@ public class SecurityConfig {
         CorsConfiguration cors = new CorsConfiguration();
         cors.setAllowedOrigins(origins);
         cors.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        cors.setAllowedHeaders(List.of("*"));
+        cors.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", cors);
+        return source;
+   */
+    
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration cors = new CorsConfiguration();
+
+        // allow any http://localhost:<any-port>
+        cors.setAllowedOriginPatterns(List.of("http://localhost:[*]"));
+
+        cors.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
         cors.setAllowedHeaders(List.of("*"));
         cors.setAllowCredentials(true);
 
@@ -117,8 +133,8 @@ public class SecurityConfig {
 
 
 
-
-/*package com.hrms.auth.security;
+/*
+package com.hrms.auth.security;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
