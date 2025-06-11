@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = "com.hrms")   // ← ADDED
 public class HRMSAuthApplication {
     public static void main(String[] args) {
         SpringApplication.run(HRMSAuthApplication.class, args);
